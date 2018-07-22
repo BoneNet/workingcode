@@ -125,27 +125,28 @@ def mura_preprocess(train_path):
     #         train_labels.append(train_labels_patient[i])
     
     # train_data=np.asarray(train_data_list)
-    valid_img_paths=valid_df.img.values.tolist()
-    valid_labels_patient=valid_df.label.values.tolist()
+    train_img_paths=train_df.img.values.tolist()
+    train_labels_patient=train_df.label.values.tolist()
+    valid_img_paths=train_df.img.values.tolist()
+    valid_labels_patient=train_df.label.values.tolist()
     train_data_list=[]
     train_labels=[]
     valid_data_list=[]
     valid_labels=[]
-    for i in range(len(valid_img_paths)//3):
-        patient_dir=os.path.join("dataloader", valid_img_paths[i])
-        print("Loading: %s (%d/%d)"%(patient_dir, i, len(valid_img_paths)))
+    for i in range(len(train_img_paths)):
+        patient_dir=os.path.join("dataloader", train_img_paths[i])
+        print("Loading: %s (%d/%d)"%(patient_dir, i, len(train_img_paths)))
         for f in glob.glob(patient_dir + "*"):
-            valid_data_patient=[]
-            valid_img=png.read_png_int(f).tolist()
-            valid_img=imresize(valid_img, (32, 32))
-            valid_img = np.stack((valid_img,)*3, -1)
-            valid_data_patient.append(valid_img)
-        train_data_list.extend(valid_data_patient)
-        for _ in range(len(valid_data_patient)):
-            train_labels.append(valid_labels_patient[i])
+            train_data_patient=[]
+            train_img=png.read_png_int(f).tolist()
+            train_img=imresize(train_img, (32, 32))
+            train_img = np.stack((train_img,)*3, -1)
+            train_data_patient.append(train_img)
+	    train_labels.append(train_labels_patient[i])
+        train_data_list.extend(train_data_patient)
     train_data=np.asarray(train_data_list)
     
-    for i in range(len(valid_img_paths)//3, len(valid_img_paths)):
+    for i in range(len(valid_img_paths)):
         patient_dir=os.path.join("dataloader", valid_img_paths[i])
         print("Loading: %s (%d/%d)"%(patient_dir, i, len(valid_img_paths)))
         for f in glob.glob(patient_dir + "*"):
@@ -154,9 +155,8 @@ def mura_preprocess(train_path):
             valid_img=imresize(valid_img, (32, 32))
             valid_img = np.stack((valid_img,)*3, -1)
             valid_data_patient.append(valid_img)
+	    valid_labels.append(valid_labels_patient[i])
         valid_data_list.extend(valid_data_patient)
-        for _ in range(len(valid_data_patient)):
-            valid_labels.append(valid_labels_patient[i])
     valid_data=np.asarray(valid_data_list)
     
     
