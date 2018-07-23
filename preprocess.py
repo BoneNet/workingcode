@@ -5,6 +5,7 @@ import pandas as pd
 import glob
 import matplotlib._png as png
 from scipy.misc import imresize
+from imageio import imread
 
 
 def unpickle(file):
@@ -109,8 +110,7 @@ def mura_preprocess(train_path):
     train_df=pd.read_csv(csv_train_filess, names=['img', 'label'], header=None)
     valid_df=pd.read_csv(csv_valid_filess, names=['img', 'label'], header=None)
     
-    # train_img_paths=train_df.img.values.tolist()
-    # train_labels_patient=train_df.label.values.tolist()
+    
     # train_data_list=[]
     # train_labels=[]
     # for i in range(len(train_img_paths)):
@@ -124,45 +124,51 @@ def mura_preprocess(train_path):
     #     for _ in range(len(train_data_patient)):
     #         train_labels.append(train_labels_patient[i])
     
-    # train_data=np.asarray(train_data_list)
     train_img_paths=train_df.img.values.tolist()
+    valid_img_paths=valid_df.img.values.tolist()
     train_labels_patient=train_df.label.values.tolist()
-    valid_img_paths=train_df.img.values.tolist()
-    valid_labels_patient=train_df.label.values.tolist()
+    valid_labels_patient=valid_df.label.values.tolist()
     train_data_list=[]
     train_labels=[]
     valid_data_list=[]
     valid_labels=[]
-    for i in range(len(train_img_paths)):
+    
+    for i in range(len(valid_img_paths)//3):
         patient_dir=os.path.join("dataloader", train_img_paths[i])
         print("Loading: %s (%d/%d)"%(patient_dir, i, len(train_img_paths)))
         for f in glob.glob(patient_dir + "*"):
-            train_data_patient=[]
-            train_img=png.read_png_int(f).tolist()
-            train_img=imresize(train_img, (32, 32))
-            train_img = np.stack((train_img,)*3, -1)
-            train_data_patient.append(train_img)
-	    train_labels.append(train_labels_patient[i])
-        train_data_list.extend(train_data_patient)
+            valid_data_patient=[]
+            valid_img=png.read_png_int(f)
+            valid_img=imresize(valid_img, (64, 64))
+            valid_img = np.stack((valid_img,)*3, -1)
+            valid_data_patient.append(valid_img)
+        train_data_list.extend(valid_data_patient)
+        for _ in range(len(valid_data_patient)):
+            lst = [0, 0]
+            lst[train_labels_patient[i]] = 1
+            train_labels.append(lst)
     train_data=np.asarray(train_data_list)
     
-    for i in range(len(valid_img_paths)):
+    for i in range(len(valid_img_paths)//3):
         patient_dir=os.path.join("dataloader", valid_img_paths[i])
         print("Loading: %s (%d/%d)"%(patient_dir, i, len(valid_img_paths)))
         for f in glob.glob(patient_dir + "*"):
             valid_data_patient=[]
-            valid_img=png.read_png_int(f).tolist()
-            valid_img=imresize(valid_img, (32, 32))
+            valid_img=png.read_png_int(f)
+            valid_img=imresize(valid_img, (64, 64))
             valid_img = np.stack((valid_img,)*3, -1)
             valid_data_patient.append(valid_img)
-	    valid_labels.append(valid_labels_patient[i])
         valid_data_list.extend(valid_data_patient)
+        for _ in range(len(valid_data_patient)):
+            lst = [0, 0]
+            lst[valid_labels_patient[i]] = 1
+            valid_labels.append(lst)
     valid_data=np.asarray(valid_data_list)
     
     
     # return train_data, train_labels, valid_data, valid_labels
 
-    return np.array(train_data), np.expand_dims(np.array(train_labels), axis=1), np.array(valid_data), np.expand_dims(np.array(valid_labels), axis=1)
+    return np.array(train_data), np.array(train_labels), np.array(valid_data), np.array(valid_labels)
     
     
     
